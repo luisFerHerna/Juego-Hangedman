@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es"> 
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Ahorcado</title> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+        <h1 class="text-center">Juego de Ahorcado</h1>
+        <p class="text-center">Adivina el nombre de frutas en inglés</p>
+        <!-- Botón para comenzar el juego que ejecuta la función 'empezar' cuando se hace clic -->
+        <div class="d-flex justify-content-center align-items-center" style="height: 10vh;">
+            <button id="desaparecer" class="btn btn-primary" onclick="empezar()">Empezar</button>
+        </div>
+                
+        <!-- Div que muestra la imagen-->
+        <div id="dibujo" style="display:none;" >
+            <img src="./img/primero.png" alt="Imagen del juego" class="img-fluid">
+        </div>  
+        
+        <!-- Div que mostrará la cantidad de letras de la fruta oculta -->
+        <div id="total"></div>
+
+        <!-- Div que mostrará la estructura de las letras ocultas de la fruta -->
+        <div id="estructura"></div>
+
+        <!-- Div donde se mostrará la información del ahorcado -->
+        <div id="ahorcado"></div>
+        
+        <!-- Div donde se mostrará un mensaje de éxito o error -->
+        <div id="mensaje" style="text-decoration: double; font-size: 24px; font-weight: bold; color: #ff0000;  ">
+        </div>
+        
+        
+        <!-- Input donde el usuario puede ingresar una letra para adivinar -->
+        <div id="input-letter">
+            <input type="text" id="abc" maxlength="1" class="form-control" placeholder="Ingresa una letra"
+                oninput="verificarLetra(event)">
+        </div>
+
+        <!-- Div para mostrar las letras que el usuario ha usado -->
+        <div id="letras"></div>
+        
+        <!-- Div que muestra las letras incorrectas adivinadas hasta un máximo de 6 -->
+        <div id="errores">
+            <p>Letras incorrectas (máximo 6): <span id="letras-erroneas"></span></p>
+        </div>
+
+   
+ 
+
+        <!-- Script de JavaScript para manejar la lógica del juego -->
+        <script>
+            // Abecedario en un arreglo de letras
+            const abecedario = "abcdefghijklmnopqrstuvwxyz".split('');
+            // Variables que se inicializan en función del juego
+            let fruta;  // La fruta que se va a adivinar
+            let frutaOculta; // La fruta oculta, representada por guiones bajos
+            let errores = 0; // Contador de errores
+            let letrasAdivinadas = []; // Arreglo que almacenará las letras adivinadas correctamente
+            let letrasUsadas = []; // Arreglo que almacenará todas las letras usadas (correctas o no)
+            let letrasErroneas = []; // Arreglo que almacenará las letras incorrectas
+
+            // Lista de frutas con sus nombres en inglés y en español
+            const frutas = [
+                { nombre: 'Apple', traduccion: 'Manzana' },
+                { nombre: 'Banana', traduccion: 'Plátano' },
+                { nombre: 'Orange', traduccion: 'Naranja' },
+                { nombre: 'Strawberry', traduccion: 'Fresa' },
+                { nombre: 'Pineapple', traduccion: 'Piña' },
+                { nombre: 'Grape', traduccion: 'Uva' },
+                { nombre: 'Watermelon', traduccion: 'Sandía' },
+                { nombre: 'Peach', traduccion: 'Durazno' },
+                { nombre: 'Pear', traduccion: 'Pera' },
+                { nombre: 'Cherry', traduccion: 'Cereza' },
+                { nombre: 'Mango', traduccion: 'Mango' },
+                { nombre: 'Blueberry', traduccion: 'Arándano' },
+                { nombre: 'Raspberry', traduccion: 'Frambuesa' },
+                { nombre: 'Lemon', traduccion: 'Limón' },
+                { nombre: 'Lime', traduccion: 'Lima' },
+                { nombre: 'Coconut', traduccion: 'Coco' },
+                { nombre: 'Papaya', traduccion: 'Papaya' },
+                { nombre: 'Kiwi', traduccion: 'Kiwi' },
+                { nombre: 'Pomegranate', traduccion: 'Granada' },
+                { nombre: 'Avocado', traduccion: 'Aguacate' },
+                { nombre: 'Fig', traduccion: 'Higo' },
+                { nombre: 'Plum', traduccion: 'Ciruela' },
+                { nombre: 'Apricot', traduccion: 'Albaricoque' },
+                { nombre: 'Guava', traduccion: 'Guayaba' },
+                { nombre: 'Melon', traduccion: 'Melón' },
+                { nombre: 'Blackberry', traduccion: 'Mora' },
+                { nombre: 'Tangerine', traduccion: 'Mandarina' },
+            ];
+
+            // Función que selecciona una fruta aleatoriamente
+            function aleatorio() {
+                return frutas[Math.floor(Math.random() * frutas.length)];
+            }
+
+            // Función que comienza el juego, inicializa las variables y muestra la estructura inicial
+            function empezar() {
+                document.getElementById('desaparecer').style.display = 'none'; //Quita el boton de empezar al dar click
+                document.getElementById('dibujo').style.display = 'block'; // Muestra la imagen al inicio del juego
+                document.getElementById('dibujo').innerHTML = '<br><img src="./img/primero.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+
+                errores = 0; // Resetea los errores
+                letrasAdivinadas = []; // Resetea las letras adivinadas
+                letrasUsadas = []; // Resetea las letras usadas
+                letrasErroneas = []; // Resetea las letras incorrectas
+                fruta = aleatorio(); // Selecciona una nueva fruta aleatoria
+                frutaOculta = Array(fruta.nombre.length).fill('_'); // Crea una estructura de guiones bajos para la fruta
+                document.getElementById('ahorcado').innerHTML = frutaOculta.join(' '); // Muestra la fruta oculta
+
+                // Muestra las cantidad de letras de la fruta
+                document.getElementById('total').innerHTML = 'La fruta tiene '+fruta.nombre.length + ' letras';
+
+                // Muestra las letras usadas en la interfaz
+                document.getElementById('letras').innerHTML = `Letras usadas: `;
+
+                // Limpia cualquier mensaje de error o éxito previo
+                document.getElementById('mensaje').innerHTML = '';
+
+                // Limpia el campo de input
+                document.getElementById('abc').value = '';
+
+                // Limpia las letras erróneas mostradas
+                document.getElementById('letras-erroneas').innerHTML = '';
+            }
+
+            // Función que verifica la letra ingresada por el usuario
+            function verificarLetra(event) {
+                let letra = event.target.value.toLowerCase(); // Obtiene la letra en minúscula
+                if (letra.length === 1 && abecedario.includes(letra)) {
+                    event.target.value = ''; // Limpia el campo de input
+                    adivinarLetra(letra); // Llama a la función que maneja la adivinanza de la letra
+                } else {
+                    event.target.value = ''; // Si la letra no es válida, limpia el campo de input
+                }
+            }
+
+            // Función que maneja la lógica de adivinación de la letra
+            function adivinarLetra(letra) {
+                if (letrasUsadas.includes(letra)) { // Si ya se ha usado la letra, no permite volver a usarla
+                    alert("Ya has usado esta letra.");
+                    return;
+                }
+
+                letrasUsadas.push(letra); // Agrega la letra a las letras usadas
+                let letraCorrecta = false; // Variable que indica si la letra es correcta
+
+                // Recorre la palabra de la fruta para ver si la letra está en ella
+                for (let i = 0; i < fruta.nombre.length; i++) {
+                    if (fruta.nombre[i].toLowerCase() === letra) {
+                        frutaOculta[i] = fruta.nombre[i]; // Revela la letra correcta en la posición correspondiente
+                        letraCorrecta = true; // Marca la letra como correcta
+                    }
+                }
+
+                if (!letraCorrecta) { // Si la letra no es correcta, aumenta el contador de errores
+                    errores++;
+                    letrasErroneas.push(letra); // Agrega la letra incorrecta al listado de errores
+
+                }
+
+                // Actualiza la interfaz con la nueva fruta oculta y las letras usadas
+                document.getElementById('ahorcado').innerHTML = frutaOculta.join(' ');
+                document.getElementById('letras').innerHTML = `Letras usadas: ${letrasUsadas.join(', ')}`;
+                document.getElementById('letras-erroneas').innerHTML = letrasErroneas.join(', ');
+
+                // Si la fruta ha sido adivinada completamente, muestra un mensaje de éxito
+                if (frutaOculta.join('') === fruta.nombre) {
+                    document.getElementById('mensaje').innerHTML = `¡Felicidades! Has adivinado la fruta: ${fruta.nombre} (${fruta.traduccion})`;
+                    mostrarBotonReinicio(); // Muestra el botón para reiniciar el juego
+                }
+
+                // Si se alcanzan 6 errores, muestra un mensaje de fracaso
+                if (errores === 6) {
+                    document.getElementById('mensaje').innerHTML = `¡Fallaste! La fruta era: ${fruta.nombre} (${fruta.traduccion})`;
+                    mostrarBotonReinicio(); // Muestra el botón para reiniciar el juego
+                    document.getElementById('dibujo').innerHTML = '<br><img src="./img/septimo.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+
+                }
+                if (errores == 1) {
+                    document.getElementById('dibujo').innerHTML = '<br><img src="./img/segundo.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+                }
+                if (errores == 2) {
+                    document.getElementById('dibujo').innerHTML = '<br><img src="./img/tercero.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+                }
+                if (errores == 3) {
+                    document.getElementById('dibujo').innerHTML = '<br><img src="./img/cuarto.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+                }
+                if (errores == 4) {
+                    document.getElementById('dibujo').innerHTML = '<br><img src="./img/quinto.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+                }
+                if (errores == 5) {
+                    document.getElementById('dibujo').innerHTML = '<br><img src="./img/sexto.png" alt="Imagen del juego" class="img-fluid">'; // Muestra el dibujo
+                }
+
+                               
+
+            }
+
+            // Función que muestra el botón para reiniciar el juego
+            function mostrarBotonReinicio() {
+                document.getElementById('mensaje').innerHTML += `
+                <br><button class="btn btn-success" onclick="empezar()">Reiniciar Juego</button>
+            `;
+
+            }
+
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>
